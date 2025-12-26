@@ -303,56 +303,65 @@ async function createItem(boardId, name, email, phone, service, note) {
 
 app.get("/", (req, res) => {
   res.send(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Monday Email App</title>
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-          }
-          input, button {
-            padding: 8px;
-            margin: 5px 0;
-            width: 300px;
-          }
-        </style>
-      </head>
-      <body>
-        <h2>📧 Monday Email → Board App</h2>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Monday Email App</title>
+  <script src="https://cdn.monday.com/sdk.js"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    input, button { padding: 8px; width: 300px; margin-top: 8px; }
+  </style>
+</head>
+<body>
 
-        <p>This app listens to emails and creates board items.</p>
+<h2>📧 Monday Email → Board App</h2>
+<p>This app listens to emails and creates board items.</p>
 
-        <h3>Allowed Sender Email</h3>
-        <input id="sender" placeholder="example@gmail.com" />
-        <br/>
-        <button onclick="save()">Save Sender</button>
+<label>Allowed Sender Email</label><br/>
+<input id="sender" placeholder="example@gmail.com" /><br/>
+<button onclick="save()">Save Sender</button>
 
-        <p id="status"></p>
+<p id="status"></p>
 
-        <script>
-          async function save() {
-            const sender = document.getElementById("sender").value;
+<script>
+  const monday = window.mondaySdk();
 
-            const res = await fetch("/config/sender", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                boardId: new URLSearchParams(window.location.search).get("boardId"),
-                allowedSenderEmail: sender
-              })
-            });
+  let boardId = null;
 
-            const data = await res.json();
-            document.getElementById("status").innerText =
-              data.message || "Saved";
-          }
-        </script>
-      </body>
-    </html>
-  `);
+  monday.listen("context", (res) => {
+    boardId = res.data.boardId;
+    console.log("Board ID:", boardId);
+  });
+
+  async function save() {
+    if (!boardId) {
+      alert("Board ID not available yet");
+      return;
+    }
+
+    const sender = document.getElementById("sender").value;
+
+    const response = await fetch("/config/sender", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        boardId,
+        allowedSenderEmail: sender
+      })
+    });
+
+    const data = await response.json();
+    document.getElementById("status").innerText =
+      data.message || "Saved successfully";
+  }
+</script>
+
+</body>
+</html>
+`);
 });
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
