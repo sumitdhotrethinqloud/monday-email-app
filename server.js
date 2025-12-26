@@ -300,6 +300,60 @@ async function createItem(boardId, name, email, phone, service, note) {
 //app.listen(3000, () => {
 //  console.log("🚀 Server running on port 3000");
 //});
+
+app.get("/", (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Monday Email App</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+          }
+          input, button {
+            padding: 8px;
+            margin: 5px 0;
+            width: 300px;
+          }
+        </style>
+      </head>
+      <body>
+        <h2>📧 Monday Email → Board App</h2>
+
+        <p>This app listens to emails and creates board items.</p>
+
+        <h3>Allowed Sender Email</h3>
+        <input id="sender" placeholder="example@gmail.com" />
+        <br/>
+        <button onclick="save()">Save Sender</button>
+
+        <p id="status"></p>
+
+        <script>
+          async function save() {
+            const sender = document.getElementById("sender").value;
+
+            const res = await fetch("/config/sender", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                boardId: new URLSearchParams(window.location.search).get("boardId"),
+                allowedSenderEmail: sender
+              })
+            });
+
+            const data = await res.json();
+            document.getElementById("status").innerText =
+              data.message || "Saved";
+          }
+        </script>
+      </body>
+    </html>
+  `);
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(" Server running on port", PORT);
